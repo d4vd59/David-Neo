@@ -7,4 +7,7 @@ root.geometry("400x300")
 label = tk.Label(root, text="Hello, World!")
 label.pack()
 
+label2 = tk.Label(root, text="Moin")
+label2.pack()
+
 root.mainloop()
