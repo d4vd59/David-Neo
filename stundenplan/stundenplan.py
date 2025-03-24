@@ -8,6 +8,7 @@ label = tk.Label(root, text="Hello, World!")
 label.pack()
 
 label2 = tk.Label(root, text="Moin")
-label2.pack()
+label2.pack(side="bottom")
+
 
 root.mainloop()
