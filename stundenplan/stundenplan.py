@@ -43,7 +43,7 @@ def lade_stundenplan():
 
     kalender = Calendar(requests.get(url).text)
 
-    
+   
     aktuelle_woche = datetime.today().isocalendar()[1]
 
     
@@ -53,7 +53,7 @@ def lade_stundenplan():
         values = [block] + ["" for _ in tage]
         item = tree.insert("", tk.END, values=values)
 
-        
+       
         if woche == aktuelle_woche:
             tree.item(item, tags=("aktuelle_woche",))
 
