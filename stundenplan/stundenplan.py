@@ -56,29 +56,29 @@ def lade_stundenplan():
 
     kalender = Calendar(requests.get(url).text)
 
-    # Kopfzeile
+   
     font_header = ("Segoe UI", 9, "bold")
-    bg_header = "#F5F5F5"
+    bg_header = "#B0B0B0"  
     tk.Label(table_frame, text="Block", font=font_header, bg=bg_header, width=16, padx=5, pady=5).grid(row=0, column=0, sticky="nsew")
 
     for j, tag in enumerate(tage_formatiert):
-        bg = "#ffaceb" if j == heute_index else bg_header  # sanftes Rosa
+        bg = "#ffaceb" if j == heute_index else bg_header  
         tk.Label(table_frame, text=tag, font=font_header, bg=bg, width=18, padx=5, pady=5).grid(row=0, column=j+1, sticky="nsew")
 
-    # Tabelle füllen
+    
     for i, block in enumerate(zeitbloecke):
         row = []
-        bg_block = "#FAFAFA"
+        bg_block = "#E8E8E8"  
         tk.Label(table_frame, text=block, font=("Segoe UI", 9), bg=bg_block, width=16, height=3).grid(row=i+1, column=0, sticky="nsew")
 
         for j in range(len(tage_formatiert)):
-            bg = "#ffaceb" if j == heute_index else "white" # spalte farbe
+            bg = "#E8E8E8" if j != heute_index else "#ffaceb"  
             lbl = tk.Label(table_frame, text="", font=("Segoe UI", 9), bg=bg, width=18, height=3, wraplength=140, justify="center")
             lbl.grid(row=i+1, column=j+1, sticky="nsew")
             row.append(lbl)
         zellen.append(row)
 
-    # Kalenderdaten einfügen
+    
     for event in kalender.events:
         event_tag = event.begin.datetime.date()
         for i, tag_datum in enumerate(tage_datetime):
