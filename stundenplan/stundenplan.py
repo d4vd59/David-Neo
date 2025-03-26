@@ -64,51 +64,55 @@ def lade_stundenplan():
     else:
         url = f"{base_url}/{kuerzel}" # Ansonsten URL erweitern mit Kürzel/Klasse
 
-    tage_formatiert, _, tage_datetime = generiere_tage()
+    tage_formatiert, _, tage_datetime = generiere_tage() # ermittelt die Tage der aktuellen Woche
 
-    heute_datum = datetime.today().date()
-    heute_index = -1
-    for i, tag_datum in enumerate(tage_datetime):
+    heute_datum = datetime.today().date() # speichert das aktuelle Datum (also das von heute) als datetime.date-Objekt ab
+    heute_index = -1 # aktueller Tag bekommt einen Wert zugewiesen, damit er nicht leer ist
+
+    for i, tag_datum in enumerate(tage_datetime): # hier wird einmal über die generierten Tage gegangen, um den Index des aktuellen Tags zu bestimmen
         if tag_datum.date() == heute_datum:
             heute_index = i
             break
 
     try:
-        response = requests.get(url)
-        if response.status_code != 200 or not response.text.strip():
+        response = requests.get(url) # hier wird request an die URL gesendet, um an die Daten des Kalenders abzurufen
+        if response.status_code != 200 or not response.text.strip(): # Wenn es keine Antwort gibt, wird eine Fehlermeldung ausgegeben
             raise ValueError("Fehler beim Laden des Kalenders.")
-        kalender = Calendar(response.text)
-    except Exception as e:
+        
+        kalender = Calendar(response.text) # hier werden die Kalenderdaten, die von der URL abgerufen werden, mithilfe von ics verarbeitet beziehungsweise geparst
+
+    except Exception as e: # falls der Kalender nicht geladen werden kann, wird sich hier um den Fehler gekümmert
         messagebox.showerror("Fehler", f"Das Kürzel '{kuerzel}' ist ungültig oder konnte nicht geladen werden.")
         return
 
-    font_header = ("Segoe UI", 9, "bold")
+    font_header = ("Segoe UI", 9, "bold") # hier wird die Schriftart und die Hintergrundfarbe für die Kopfzeile festgelegt und definiert
     bg_header = "#B0B0B0"
 
-    tk.Label(table_frame, text="Block", font=font_header, bg=bg_header, width=16, padx=5, pady=5,
+    tk.Label(table_frame, text="Block", font=font_header, bg=bg_header, width=16, padx=5, pady=5, # hier wird die Kopfzeile für die Spalte(also den "Block") erstellt
              bd=0.5, relief="solid", justify="center").grid(row=0, column=0, sticky="nsew")
 
-    for j, tag in enumerate(tage_formatiert):
+    for j, tag in enumerate(tage_formatiert): # hier wird die Kopfzeile für die Wochentage erstellt
         bg = "#ffaceb" if j == heute_index else bg_header
         tk.Label(table_frame, text=tag, font=font_header, bg=bg, width=18, padx=5, pady=5,
                  bd=0.5, relief="solid").grid(row=0, column=j+1, sticky="nsew")
 
-    for i, block in enumerate(zeitbloecke):
+    for i, block in enumerate(zeitbloecke): # hier werden die Zeitblöcke(also 8:00 - 9:30 oder 9:45 - 11:15) in der linken erstellt
         row = []
         bg_block = "#E8E8E8"
         block_nummeriert = f"Block {i+1}\n{block}"
-        tk.Label(table_frame, text=block_nummeriert, font=("Segoe UI", 9), bg=bg_block,
+
+        tk.Label(table_frame, text=block_nummeriert, font=("Segoe UI", 9), bg=bg_block, # hier wird dann die linke Spalte für jeden Block erstellt
                  width=16, height=3, bd=0.5, relief="solid", justify="center").grid(row=i+1, column=0, sticky="nsew")
 
-        for j in range(len(tage_formatiert)):
+        for j in range(len(tage_formatiert)): # hier werden die Zellen für jeden Wochentag und Block erstellt
             bg = "#E8E8E8" if j != heute_index else "#ffaceb"
             lbl = tk.Label(table_frame, text="", font=("Segoe UI", 9), bg=bg, width=18, height=3,
                            wraplength=140, justify="center", bd=0.5, relief="solid")
             lbl.grid(row=i+1, column=j+1, sticky="nsew")
             row.append(lbl)
-        zellen.append(row)
+        zellen.append(row) # die erstellten Zellen werden dann zur Liste "zellen" hinzugefügt
 
-    for event in kalender.events:
+    for event in kalender.events: # hier wird jeder Tag einmal durchgegangen, um das jeweilige Event am richtigen Tag einzutragen
         event_tag = event.begin.datetime.date()
         for i, tag_datum in enumerate(tage_datetime):
             if tag_datum.date() == event_tag:
@@ -116,15 +120,18 @@ def lade_stundenplan():
                     start, end = block.split(" - ")
                     start_time = datetime.strptime(start, "%H:%M").time()
                     end_time = datetime.strptime(end, "%H:%M").time()
-                    if start_time <= event.begin.time() <= end_time:
+
+                    if start_time <= event.begin.time() <= end_time: # hier wird dann geprüft, ob das Event in den aktuellen Block fällt
+                        # wenn es zutrifft, wird dann der Event-Text ausgelesen 
                         current_text = zellen[k][i].cget("text")
                         new_text = f"{current_text}\n{event.name}" if current_text else event.name
                         zellen[k][i].config(text=new_text.strip())
 
-def woche(offset):
+def woche(offset): # hier wird auf die globale Variable "woche_offset" zugegriffen, um die Verschiebung der Woche zu speichern 
     global wochen_offset
+    # hier wird der Wochenversatz(also die Anzahl der Wochen, um die der Stundenplan von der aktuellen Woche abweicht) angepasst, also wenn offset = 0 ist, wird die aktuelle Woche angezeigt, wenn offset =+1 ist, wird die nächste Woche angezeigt und wenn offset =-1  ist, wird die vorherige Woche angezeigt
     wochen_offset += offset
-    lade_stundenplan()
+    lade_stundenplan() # hier wird dann der Stundenplan mit dem aktualisierten Wochenversatz neu geladen
 
-lade_stundenplan()
-root.mainloop()
+lade_stundenplan() # hier wird der Stundenplan beim Start der Anwendung geladen
+root.mainloop() # hiermit wird die Hauptschleife von Tkinter gestartet, um die GUI anzuzeigen und eine Benutzerinteraktion zu ermöglichen
