@@ -26,8 +26,6 @@ tk.Button(frame_top, text="→", command=lambda: woche(1), font=("Segoe UI", 9))
 table_frame = tk.Frame(root, bg="white")
 table_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
-zellen = []
-
 def generiere_tage():
     heute = datetime.today() + timedelta(weeks=wochen_offset)
     start = heute - timedelta(days=heute.weekday())
@@ -36,16 +34,14 @@ def generiere_tage():
     return tage_formatiert, start.isocalendar()[1], tage
 
 def lade_stundenplan():
-    global zellen
     for widget in table_frame.winfo_children():
         widget.destroy()
-    zellen.clear()
+    zellen = []
 
     kuerzel = entry.get().strip()
     url = base_url if not kuerzel else f"{base_url}/{kuerzel}"
 
-    tage_formatiert, woche, tage_datetime = generiere_tage()
-    aktuelle_woche = datetime.today().isocalendar()[1]
+    tage_formatiert, _, tage_datetime = generiere_tage()
 
     heute_datum = datetime.today().date()
     heute_index = -1
@@ -56,31 +52,32 @@ def lade_stundenplan():
 
     kalender = Calendar(requests.get(url).text)
 
-   
     font_header = ("Segoe UI", 9, "bold")
-    bg_header = "#B0B0B0"  
-   
+    bg_header = "#B0B0B0"
 
+    tk.Label(table_frame, text="Block", font=font_header, bg=bg_header, width=16, padx=5, pady=5,
+             bd=0.5, relief="solid", justify="center").grid(row=0, column=0, sticky="nsew")
 
     for j, tag in enumerate(tage_formatiert):
-        bg = "#ffaceb" if j == heute_index else bg_header  
-        tk.Label(table_frame, text=tag, font=font_header, bg=bg, width=18, padx=5, pady=5).grid(row=0, column=j+1, sticky="nsew")
+        bg = "#ffaceb" if j == heute_index else bg_header
+        tk.Label(table_frame, text=tag, font=font_header, bg=bg, width=18, padx=5, pady=5,
+                 bd=0.5, relief="solid").grid(row=0, column=j+1, sticky="nsew")
 
-    
     for i, block in enumerate(zeitbloecke):
         row = []
-        bg_block = "#E8E8E8"  
-        tk.Label(table_frame, text=block, font=("Segoe UI", 9), bg=bg_block, width=16, height=3).grid(row=i+1, column=0, sticky="nsew")
+        bg_block = "#E8E8E8"
+        block_nummeriert = f"Block {i+1}\n{block}"
+        tk.Label(table_frame, text=block_nummeriert, font=("Segoe UI", 9), bg=bg_block,
+                 width=16, height=3, bd=0.5, relief="solid", justify="center").grid(row=i+1, column=0, sticky="nsew")
 
         for j in range(len(tage_formatiert)):
-            bg = "#E8E8E8" if j != heute_index else "#ffaceb"  
+            bg = "#E8E8E8" if j != heute_index else "#ffaceb"
             lbl = tk.Label(table_frame, text="", font=("Segoe UI", 9), bg=bg, width=18, height=3,
-               wraplength=140, justify="center", bd=1, relief="solid")
+                           wraplength=140, justify="center", bd=0.5, relief="solid")
             lbl.grid(row=i+1, column=j+1, sticky="nsew")
             row.append(lbl)
         zellen.append(row)
 
-    
     for event in kalender.events:
         event_tag = event.begin.datetime.date()
         for i, tag_datum in enumerate(tage_datetime):
