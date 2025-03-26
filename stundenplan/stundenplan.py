@@ -1,63 +1,68 @@
-import tkinter as tk
-from datetime import datetime, timedelta
-from ics import Calendar
-from tkinter import messagebox
-import requests
+import tkinter as tk # Importiert das TK Inter Modul für GUI
+from datetime import datetime, timedelta # Für Zeit und Datum
+from ics import Calendar # Zum Parsen von ICS-Kalenderdateien
+from tkinter import messagebox # Für Popup Boxen
+import requests # Zum herunterladen von Daten über HTTP
 
-base_url = "https://intranet.bib.de/ical/5780139642c4ec77bd1f67ec885f2e92"
-zeitbloecke = ["8:00 - 9:30", "9:45 - 11:15", "11:30 - 13:00", "13:45 - 15:15", "15:30 - 17:00"]
-wochen_offset = 0
+base_url = "https://intranet.bib.de/ical/5780139642c4ec77bd1f67ec885f2e92" # Link zum Stundenplan im ICAL Format inkl. Token
+zeitbloecke = ["8:00 - 9:30", "9:45 - 11:15", "11:30 - 13:00", "13:45 - 15:15", "15:30 - 17:00"] # Liste mit den Zeitblöcken
+wochen_offset = 0 # Offset zur aktuellen Woche (0 = diese Woche, -1 = letzte Woche, +1 = nächste Woche usw.)
 
-root = tk.Tk()
-root.title("Stundenplan")
-root.geometry("1000x550")
-root.configure(bg="white")
+root = tk.Tk() # TK Start
+root.title("Stundenplan") # Fenster-Titel
+root.geometry("1000x550") # Fenster-Größe
+root.configure(bg="white") # Hintergrundfarbe weiß
 
+# Oberer Frame für Suchfeld und Buttons
 frame_top = tk.Frame(root, bg="white")
 frame_top.pack(fill="x", pady=10, padx=10)
 
+# Wird aufgerufen, wenn das Eingabefeld angeklickt wird
 def on_entry_click(event):
     if entry.get() == "Bitte Kürzel/Klasse eingeben":
-        entry.delete(0, "end")
-        entry.config(fg="black")
+        entry.delete(0, "end") # Löscht den Platzhaltertext
+        entry.config(fg="black") # Setzt Textfarbe auf schwarz
 
-def on_focus_out(event):
-    if entry.get().strip() == "":
-        entry.insert(0, "Bitte Kürzel/Klasse eingeben")
-        entry.config(fg="grey")
-
+# Eingabefeld für Klassen-/Kürzel
 entry = tk.Entry(frame_top, font=("Segoe UI", 10), width=20, fg="gray")
-entry.insert(0, "Bitte Kürzel/Klasse eingeben")
+entry.insert(0, "Bitte Kürzel/Klasse eingeben") # Platzhaltertext
 entry.pack(side="left", padx=5)
 
+# Bindet die Onclick Funktion an das Eingabefeld
 entry.bind("<FocusIn>", on_entry_click)
-entry.bind("<FocusOut>", on_focus_out)
 
-tk.Button(frame_top, text="Laden", command=lambda: lade_stundenplan(), font=("Segoe UI", 9)).pack(side="left", padx=5)
+# Button zum Laden des Stundenplans
+tk.Button(frame_top, text="Laden", command=lambda: lade_stundenplan(), font=("Segoe UI", 9)).pack(side="left", padx=5) 
+# Navigation: Zurück zur vorherigen Woche
 tk.Button(frame_top, text="←", command=lambda: woche(-1), font=("Segoe UI", 9)).pack(side="left", padx=5)
+# Button "Heute" – kehrt zur aktuellen Woche zurück
 tk.Button(frame_top, text="Heute", command=lambda: woche(-wochen_offset), font=("Segoe UI", 9)).pack(side="left", padx=5)
+# Navigation: Vor zur nächsten Woche
 tk.Button(frame_top, text="→", command=lambda: woche(1), font=("Segoe UI", 9)).pack(side="left", padx=5)
 
+# Hauptbereich für die Stundenplan-Tabelle
 table_frame = tk.Frame(root, bg="white")
 table_frame.pack(expand=True, fill="both", padx=10, pady=10)
 
+# Generiert eine Liste mit Tagesdaten für die aktuelle Woche
 def generiere_tage():
-    heute = datetime.today() + timedelta(weeks=wochen_offset)
-    start = heute - timedelta(days=heute.weekday())
-    tage = [(start + timedelta(days=i)) for i in range(6)]
-    tage_formatiert = [tag.strftime("%a %d.%m.") for tag in tage]
-    return tage_formatiert, start.isocalendar()[1], tage
+    heute = datetime.today() + timedelta(weeks=wochen_offset) # Aktuelles Datum + Wochen-Offset
+    start = heute - timedelta(days=heute.weekday()) # Wochenanfang (Montag)
+    tage = [(start + timedelta(days=i)) for i in range(6)] # Liste: Montag bis Samstag
+    tage_formatiert = [tag.strftime("%a %d.%m.") for tag in tage] # Formatierung für Anzeige
+    return tage_formatiert, start.isocalendar()[1], tage # Gibt formatierte Tage, KW und rohe Datumsobjekte zurück
 
+# Lädt den Stundenplan (ICS) und zeigt ihn an
 def lade_stundenplan():
     for widget in table_frame.winfo_children():
-        widget.destroy()
-    zellen = []
+        widget.destroy() # # Entfernt alle bisherigen Inhalte der Tabelle (alte Woche)
+    zellen = [] # Leere Liste 
 
-    kuerzel = entry.get().strip()
+    kuerzel = entry.get().strip() # Liest Text aus dem Eingabefeld
     if kuerzel == "" or kuerzel == "Bitte Kürzel/Klasse eingeben":
-        url = base_url 
+        url = base_url # Standard-URL verwenden, wenn nichts eingegeben wurde
     else:
-        url = f"{base_url}/{kuerzel}"
+        url = f"{base_url}/{kuerzel}" # Ansonsten URL erweitern mit Kürzel/Klasse
 
     tage_formatiert, _, tage_datetime = generiere_tage()
 
